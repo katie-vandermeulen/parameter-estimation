@@ -1,48 +1,46 @@
-import unittest
 import numpy as np
-from SimplifiedThreePL import SimplifiedThreePL
-from Experiment import Experiment
+from scipy.optimize import minimize
 
-class TestSimplifiedThreePL(unittest.TestCase):
-    def setUp(self):
-        self.difficulties = np.array([2, 1, 0, -1, -2])
-        self.trials = np.array([100, 100, 100, 100, 100])
-        self.correct_responses = np.array([55, 60, 75, 90, 95])
-        self.experiment = Experiment(self.difficulties, self.trials, self.correct_responses)
-        self.model = SimplifiedThreePL(self.experiment)
+class SimplifiedThreePL:
+    def __init__(self, experiment):
+        self.experiment = experiment
+        self._discrimination = None
+        self._logit_base_rate = None
+        self._is_fitted = False
 
-    def test_initialization(self):
-        self.assertFalse(self.model._is_fitted)
+    def summary(self):
+        n_correct = np.sum(self.experiment.correct_responses)
+        n_total = np.sum(self.experiment.trials)
+        return {
+            "n_total": n_total,
+            "n_correct": n_correct,
+            "n_incorrect": n_total - n_correct,
+            "n_conditions": len(self.experiment.difficulties),
+        }
 
-    def test_summary(self):
-        summary = self.model.summary()
-        self.assertEqual(summary["n_total"], 500)
-        self.assertEqual(summary["n_correct"], 375)
-        self.assertEqual(summary["n_incorrect"], 125)
-        self.assertEqual(summary["n_conditions"], 5)
+    def predict(self, parameters):
+        a, logit_c = parameters
+        c = 1 / (1 + np.exp(-logit_c))  # Inverse logit transformation
+        difficulties = self.experiment.difficulties
+        return c + (1 - c) / (1 + np.exp(-a * (self.experiment.abilities - difficulties)))
 
-    def test_predict(self):
-        params = [1, 0]
-        predictions = self.model.predict(params)
-        self.assertTrue(np.all((predictions >= 0) & (predictions <= 1)))
+    def negative_log_likelihood(self, parameters):
+        probabilities = self.predict(parameters)
+        likelihoods = self.experiment.correct_responses * np.log(probabilities) + \
+                      (self.experiment.trials - self.experiment.correct_responses) * np.log(1 - probabilities)
+        return -np.sum(likelihoods)
 
-    def test_negative_log_likelihood(self):
-        initial_nll = self.model.negative_log_likelihood([1, 0])
-        self.model.fit()
-        fitted_nll = self.model.negative_log_likelihood([self.model.get_discrimination(), self.model.get_base_rate()])
-        self.assertLess(fitted_nll, initial_nll)
+    def fit(self):
+        result = minimize(self.negative_log_likelihood, [1, 0], method="L-BFGS-B")
+        self._discrimination, self._logit_base_rate = result.x
+        self._is_fitted = True
 
-    def test_get_parameters_before_fit(self):
-        with self.assertRaises(ValueError):
-            self.model.get_discrimination()
-        with self.assertRaises(ValueError):
-            self.model.get_base_rate()
+    def get_discrimination(self):
+        if not self._is_fitted:
+            raise ValueError("Model has not been fitted yet.")
+        return self._discrimination
 
-    def test_fit(self):
-        self.model.fit()
-        self.assertTrue(self.model._is_fitted)
-        self.assertIsInstance(self.model.get_discrimination(), float)
-        self.assertIsInstance(self.model.get_base_rate(), float)
-
-if __name__ == "__main__":
-    unittest.main()
+    def get_base_rate(self):
+        if not self._is_fitted:
+            raise ValueError("Model has not been fitted yet.")
+        return 1 / (1 + np.exp(-self._logit_base_rate))
