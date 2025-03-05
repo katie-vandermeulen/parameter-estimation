@@ -72,6 +72,30 @@ class TestSimplifiedThreePL(unittest.TestCase):
         fitted_nll = self.model.negative_log_likelihood([self.model.get_discrimination(), self.model.get_base_rate()])
         self.assertLess(fitted_nll, initial_nll)
 
+    def test_larger_a(self):
+        self.steepExperiment = Experiment()
+        self.steepExperiment.add_condition(SignalDetection(10, 90, 30, 870))
+        self.steepExperiment.add_condition(SignalDetection(100, 20, 40, 800))
+        self.steepExperiment.add_condition(SignalDetection(300, 10, 10, 680))
+        self.steepExperiment.add_condition(SignalDetection(600, 5, 5, 390))
+        self.steepExperiment.add_condition(SignalDetection(900, 1, 1, 100))
+
+        self.steepModel = SimplifiedThreePL(self.steepExperiment)
+        self.steepModel.fit() 
+        
+        self.experiment = Experiment() 
+        self.experiment.add_condition(SignalDetection(15, 5, 27, 8)) 
+        self.experiment.add_condition(SignalDetection(13, 6, 23, 9)) 
+        self.experiment.add_condition(SignalDetection(17, 7, 10, 4)) 
+        self.experiment.add_condition(SignalDetection(1, 8, 34, 6)) 
+        self.experiment.add_condition(SignalDetection(10, 9, 30, 3)) 
+
+        self.model = SimplifiedThreePL(self.experiment) 
+        self.model.fit()
+        
+        self.assertGreater(self.steepModel.get_discrimination(), self.model.get_discrimination()) 
+
+
     def test_get_parameters_before_fit(self):
         with self.assertRaises(ValueError):
             self.model.get_discrimination()
@@ -83,6 +107,9 @@ class TestSimplifiedThreePL(unittest.TestCase):
         self.assertTrue(self.model._is_fitted)
         self.assertIsInstance(self.model.get_discrimination(), float)
         self.assertIsInstance(self.model.get_base_rate(), float)
+    
+    def test_integration(self):
+        pass
 
 if __name__ == "__main__":
     unittest.main()
