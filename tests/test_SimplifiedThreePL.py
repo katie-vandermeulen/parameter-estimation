@@ -72,6 +72,7 @@ class TestSimplifiedThreePL(unittest.TestCase):
         fitted_nll = self.model.negative_log_likelihood([self.model.get_discrimination(), self.model.get_base_rate()])
         self.assertLess(fitted_nll, initial_nll)
 
+# test_larger_a code pulled from ChatGPT
     def test_larger_a(self):
         self.steepExperiment = Experiment()
         self.steepExperiment.add_condition(SignalDetection(10, 90, 30, 870))
