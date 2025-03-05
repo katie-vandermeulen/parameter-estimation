@@ -7,27 +7,33 @@ class SimplifiedThreePL:
         self._discrimination = None
         self._logit_base_rate = None
         self._is_fitted = False
+        self._base_rate = None
+        self.abilities = 0
+        self.difficulties = np.array([2, 1, 0, -1, -2])
 
     def summary(self):
-        n_correct = np.sum(self.experiment.correct_responses)
-        n_total = np.sum(self.experiment.trials)
+        n_correct = sum(conditions.hits + conditions.correct_rejections for conditions in self.experiment.conditions)
+        n_total = sum(conditions.misses + conditions.false_alarms + conditions.hits + conditions.correct_rejections for conditions in self.experiment.conditions)
         return {
             "n_total": n_total,
             "n_correct": n_correct,
             "n_incorrect": n_total - n_correct,
-            "n_conditions": len(self.experiment.difficulties),
+            "n_conditions": len(self.experiment.conditions),
         }
 
     def predict(self, parameters):
-        a, logit_c = parameters
-        c = 1 / (1 + np.exp(-logit_c))  # Inverse logit transformation
-        difficulties = self.experiment.difficulties
-        return c + (1 - c) / (1 + np.exp(-a * (self.experiment.abilities - difficulties)))
+        results = []
+        for b in self.difficulties:
+            a, logit_c = parameters
+            c = 1 / (1 + np.exp(-logit_c))  # Inverse logit transformation
+            results.append(c + ((1 - c) / (1 + np.exp(-a * (self.abilities - b)))))
+        return np.array(results)
 
     def negative_log_likelihood(self, parameters):
         probabilities = self.predict(parameters)
-        likelihoods = self.experiment.correct_responses * np.log(probabilities) + \
-                      (self.experiment.trials - self.experiment.correct_responses) * np.log(1 - probabilities)
+        summary = self.summary()
+        likelihoods = summary["n_correct"] * np.log(probabilities) + \
+                      summary["n_incorrect"] * np.log(1 - probabilities)
         return -np.sum(likelihoods)
 
     def fit(self):
