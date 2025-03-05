@@ -112,5 +112,31 @@ class TestSimplifiedThreePL(unittest.TestCase):
     def test_integration(self):
         pass
 
+    def test_model_does_not_corrupt_experiment(self):
+        original_experiment_data = self.experiment.conditions.copy()
+        self.model.fit()
+        self.assertEqual(self.experiment.conditions, original_experiment_data, "Expiriment data was modified!")
+
+    def test_predict_does_not_modify_parameters(self):
+        self.model.fit()
+        before_a = self.model.get_discrimination()
+        before_c = self.model.get_base_rate()
+
+        self.model.predict([1, 0]) 
+
+        after_a = self.model.get_discrimination()
+        after_c = self.model.get_base_rate()
+
+        self.assertEqual(before_a, after_a, "Discrimination parameter modified!")
+        self.assertEqual(before_c, after_c, "Base rate parameter modified!")
+
+    def test_nll_does_not_modify_experiment(self):
+        before_conditions = self.experiment.conditions.copy()
+        self.model.negative_log_likelihood([1, 0])
+        after_conditions = self.experiment.conditions.copy()
+
+        self.assertEqual(before_conditions, after_conditions, "Experiment conditions modified by NLL calculation!")
+
 if __name__ == "__main__":
     unittest.main()
+
