@@ -17,7 +17,7 @@ class TestSimplifiedThreePL(unittest.TestCase):
        self.experiment.add_condition(SignalDetection(13, 6, 23, 9))
        self.experiment.add_condition(SignalDetection(17, 7, 10, 4))
        self.experiment.add_condition(SignalDetection(1, 8, 34, 6))
-       self.experiment.add_condition(SignalDetection(10, 9, 30, 3)) 
+       self.experiment.add_condition(SignalDetection(10, 9, 30, 3))
        self.model = SimplifiedThreePL(self.experiment)
 
     def test_initialization(self):
@@ -81,19 +81,19 @@ class TestSimplifiedThreePL(unittest.TestCase):
         self.steepExperiment.add_condition(SignalDetection(900, 1, 1, 100))
 
         self.steepModel = SimplifiedThreePL(self.steepExperiment)
-        self.steepModel.fit() 
+        self.steepModel.fit()
         
-        self.experiment = Experiment() 
-        self.experiment.add_condition(SignalDetection(15, 5, 27, 8)) 
-        self.experiment.add_condition(SignalDetection(13, 6, 23, 9)) 
-        self.experiment.add_condition(SignalDetection(17, 7, 10, 4)) 
-        self.experiment.add_condition(SignalDetection(1, 8, 34, 6)) 
-        self.experiment.add_condition(SignalDetection(10, 9, 30, 3)) 
+        self.experiment = Experiment()
+        self.experiment.add_condition(SignalDetection(15, 5, 27, 8))
+        self.experiment.add_condition(SignalDetection(13, 6, 23, 9))
+        self.experiment.add_condition(SignalDetection(17, 7, 10, 4))
+        self.experiment.add_condition(SignalDetection(1, 8, 34, 6))
+        self.experiment.add_condition(SignalDetection(10, 9, 30, 3))
 
-        self.model = SimplifiedThreePL(self.experiment) 
+        self.model = SimplifiedThreePL(self.experiment)
         self.model.fit()
         
-        self.assertGreater(self.steepModel.get_discrimination(), self.model.get_discrimination()) 
+        self.assertGreater(self.steepModel.get_discrimination(), self.model.get_discrimination())
 
 
     def test_get_parameters_before_fit(self):
