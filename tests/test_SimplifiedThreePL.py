@@ -1,30 +1,70 @@
 import unittest
 import numpy as np
-from SimplifiedThreePL import SimplifiedThreePL
-from Experiment import Experiment
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),'..')))
+from src.SimplifiedThreePL import SimplifiedThreePL
+from src.Experiment import Experiment
+from src.SignalDetection import SignalDetection
 
 class TestSimplifiedThreePL(unittest.TestCase):
     def setUp(self):
-        self.difficulties = np.array([2, 1, 0, -1, -2])
-        self.trials = np.array([100, 100, 100, 100, 100])
-        self.correct_responses = np.array([55, 60, 75, 90, 95])
-        self.experiment = Experiment(self.difficulties, self.trials, self.correct_responses)
-        self.model = SimplifiedThreePL(self.experiment)
+    #    self.difficulties = np.array([2, 1, 0, -1, -2])
+    #    self.trials = np.array([100, 100, 100, 100, 100])
+    #    self.correct_responses = np.array([55, 60, 75, 90, 95])
+       self.experiment = Experiment()
+       self.experiment.add_condition(SignalDetection(15, 5, 27, 8))
+       self.experiment.add_condition(SignalDetection(13, 6, 23, 9))
+       self.experiment.add_condition(SignalDetection(17, 7, 10, 4))
+       self.experiment.add_condition(SignalDetection(1, 8, 34, 6))
+       self.experiment.add_condition(SignalDetection(10, 9, 30, 3)) 
+       self.model = SimplifiedThreePL(self.experiment)
 
     def test_initialization(self):
         self.assertFalse(self.model._is_fitted)
 
     def test_summary(self):
         summary = self.model.summary()
-        self.assertEqual(summary["n_total"], 500)
-        self.assertEqual(summary["n_correct"], 375)
-        self.assertEqual(summary["n_incorrect"], 125)
+        self.assertEqual(summary["n_total"], 245)
+        self.assertEqual(summary["n_correct"], 86)
+        self.assertEqual(summary["n_incorrect"], 159)
         self.assertEqual(summary["n_conditions"], 5)
 
     def test_predict(self):
         params = [1, 0]
         predictions = self.model.predict(params)
         self.assertTrue(np.all((predictions >= 0) & (predictions <= 1)))
+
+    def test_predict_c(self):
+        params1 = [1.2, 0]
+        prediction1 = self.model.predict(params1)
+        params2 = [1.2, 1]
+        prediction2 = self.model.predict(params2)
+        for p1, p2 in zip(prediction1, prediction2):
+            self.assertLess(p1, p2)
+
+    def test_predict_b(self):
+        params1 = [-1.2, 0]
+        prediction1 = self.model.predict(params1)
+        params2 = [-1.1, 1]
+        prediction2 = self.model.predict(params2)
+        for p1, p2 in zip(prediction1, prediction2):
+            self.assertLess(p1, p2)
+
+    def test_predict_theta(self):
+        params1 = [1.2, 0]
+        prediction1 = self.model.predict(params1)
+        params2 = [2.2, 1]
+        prediction2 = self.model.predict(params2)
+        for p1, p2 in zip(prediction1, prediction2):
+            self.assertLess(p1, p2)
+
+    def test_predict_expectedoutput(self):
+        params1 = [3, 0]
+        prediction1 = self.model.predict(params1)
+        expectoutput = [0.50123631, 0.52371294, 0.75, 0.97628706, 0.99876369]
+        for p1, e in zip(prediction1, expectoutput):
+            self.assertAlmostEqual(p1, e, places = 2)
 
     def test_negative_log_likelihood(self):
         initial_nll = self.model.negative_log_likelihood([1, 0])

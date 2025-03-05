@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import trapezoid #correct function name 
-from SignalDetection import SignalDetection
+from src.SignalDetection import SignalDetection
 
 class Experiment:
     def __init__(self):
